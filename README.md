@@ -1,58 +1,115 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Aplikasi Pencatatan Keuangan (Laravel + MySQL + Blade)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi web **Pencatatan Keuangan** (frontend + backend + database) yang dirancang untuk mengelola keuangan pribadi dengan pembagian peran (Role) **Admin** dan **User**. Dibangun menggunakan **Laravel 11**, **MySQL**, dan **Blade**, rapi, aman, dan mudah dipahami.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1. Fitur Umum (Admin & User)
+- **Registrasi Akun Baru**: Pengguna baru dapat mendaftar sendiri (role otomatis `user` dan status `aktif`).
+- **Autentikasi Aman**: Login dengan proteksi password hash (bcrypt), sesi terenkripsi, proteksi CSRF, serta pencegahan login untuk akun yang dinonaktifkan.
+- **Pengaturan Profil**: Pengguna dapat melihat data akun, mengubah nama, email, serta mengganti kata sandi.
+- **Logout Aman**: Mengakhiri sesi dan menghapus token autentikasi.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 2. Fitur User (Pengguna Layanan)
+- **Isi Saldo (Top-Up)**: Fitur penambahan saldo instan dengan tombol cepat (+50Rb, +100Rb, +500Rb, +1Juta, dll.) yang otomatis dicatat sebagai transaksi pemasukan kategori *Isi Saldo*.
+- **Dashboard Ringkasan Keuangan**:
+  - 3 Kartu Statistik: **Saldo Saat Ini**, **Total Pemasukan**, dan **Total Pengeluaran** (Format Rupiah: `Rp 1.500.000`).
+  - Tabel 5 Transaksi Terbaru beserta keterangan dan jenis transaksi.
+  - Grafik mini pos persentase pengeluaran terbesar.
+- **Catatan Transaksi (CRUD)**:
+  - Tambah catatan pemasukan & pengeluaran (nominal, tanggal, keterangan, kategori).
+  - Edit catatan transaksi yang sudah ada.
+  - Hapus catatan transaksi dengan dialog konfirmasi.
+  - Filter riwayat berdasarkan jenis transaksi (Pemasukan/Pengeluaran), kategori, dan rentang tanggal.
+- **Manajemen Kategori Kustom**:
+  - Memilih kategori bawaan sistem (*Gaji, Uang Saku, Bonus, Makan & Minum, Transportasi, Belanja, Tagihan, dll.*).
+  - Membuat kategori kustom sendiri yang **hanya terlihat dan hanya dapat digunakan oleh user pembuatnya**.
+  - Mengubah dan menghapus kategori kustom pribadi.
 
-## Learning Laravel
+### 3. Fitur Admin (Pengelola Sistem)
+- **Daftar Seluruh Pengguna**: Melihat semua akun user, role, status aktif/nonaktif, jumlah transaksi, dan tanggal registrasi.
+- **Kelola Status Akun**: Mengaktifkan atau menonaktifkan akun user dengan 1 klik (akun nonaktif langsung dicegat saat login maupun saat sedang beraktivitas).
+- **Hapus Akun Pengguna**: Menghapus akun user beserta relasi datanya (cascade delete).
+- **Proteksi Akun Sendiri**: Admin dicegah menonaktifkan atau menghapus akun administratornya sendiri.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛡️ Ketentuan Keamanan & Aturan Bisnis
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+1. **Validasi Kepemilikan Data (Server-Side Ownership)**: Setiap operasi baca, ubah, dan hapus pada transaksi serta kategori dibatasi oleh `where('user_id', Auth::id())`. Akses URL dengan manipulasi ID milik pengguna lain langsung ditolak dengan respon **`403 Forbidden`**.
+2. **Perhitungan Saldo Real-time**: Saldo dihitung langsung dari basis data (`Saldo = Total Pemasukan - Total Pengeluaran`).
+3. **Pencegahan Saldo Negatif**: Sistem otomatis menolak transaksi pengeluaran baru atau pengeditan transaksi yang menyebabkan saldo akhir menjadi minus.
+4. **Proteksi Role di Sisi Server**: Middleware `CheckRole` memblokir user biasa yang mencoba mengakses halaman/rute admin dan menyajikan tampilan error 403.
+5. **Proteksi Akun Nonaktif**: Middleware `CheckStatus` otomatis mengeluarkan sesi akun yang telah dinonaktifkan oleh administrator.
+6. **Keamanan Input**: Seluruh input divalidasi ketat di server, terbebas dari SQL Injection melalui Eloquent ORM parameterization, dan terlindungi dari XSS via Blade escaping.
 
-## Agentic Development
+---
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## 📋 Akun Demo Siap Pakai
 
-```bash
-composer require laravel/boost --dev
+Database seeder telah menyediakan akun demo dengan data transaksi awal:
 
-php artisan boost:install
+| Role | Nama Akun | Email | Password | Status |
+|---|---|---|---|---|
+| **Admin** | Administrator Keuangan | `admin@keuangan.test` | `admin123` | **Aktif** |
+| **User 1** | Budi Santoso | `budi@keuangan.test` | `user123` | **Aktif** |
+| **User 2** | Siti Rahma | `siti@keuangan.test` | `user123` | **Aktif** |
+| **User Nonaktif** | User Nonaktif | `nonaktif@keuangan.test` | `user123` | **Nonaktif** |
+
+*(Tersedia tombol pintas pada halaman login untuk mengisi email dan password demo secara otomatis).*
+
+---
+
+## 💻 Panduan Instalasi & Menjalankan Aplikasi
+
+### 1. Prasyarat
+- PHP >= 8.2 (ekstensi `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml` aktif)
+- Composer
+- MySQL Server (misal lewat Laragon atau XAMPP)
+
+### 2. Konfigurasi Database (`.env`)
+Pastikan database MySQL bernama `db_keuangan` telah dibuat:
+```sql
+CREATE DATABASE db_keuangan CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Konfigurasi file `.env` di direktori utama:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=db_keuangan
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-## Contributing
+### 3. Migrasi & Seeder Database
+Jalankan migrasi tabel dan seeder data awal dengan perintah:
+```bash
+php artisan migrate:fresh --seed
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 4. Menjalankan Server Lokal
+Jalankan server pengembangan Laravel:
+```bash
+php artisan serve
+```
 
-## Code of Conduct
+Aplikasi dapat langsung dibuka melalui peramban web di:
+```text
+http://127.0.0.1:8000
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 🧪 Pengujian Otomatis (PHPUnit Feature Tests)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Untuk menjalankan seluruh rangkaian pengujian fitur otomatis (mencakup registrasi, proteksi saldo negatif, isolasi data antar user, larangan akses admin untuk user biasa, dan pencegahan login akun nonaktif):
 
-## License
+```bash
+php artisan test
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Semua 10 pengujian fitur lulus 100% (*passed*).
